@@ -1,63 +1,62 @@
 import express from 'express';
+import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
 import cors from 'cors';
+
+const app = express();
+const server = createServer(app);
+const ws = new WebSocketServer({ server })
+const PORT = 3001;
+
+app.use(express.json());
+app.use(cors());
 
 interface Client {
     ws: WebSocket;
-    username: string;
+    usernames: string;
     roomId: string;
 }
 
 interface ChatMessage {
-    type: 'message' | 'system' | 'userList';
+    type: 'message';
     username?: string;
     content?: string;
-    timestamp?: string;
     users?: string[];
 }
-
-const app = express();
-app.use(cors());
-
-const server = createServer(app);
-const wss = new WebSocketServer({ server });
-
 const clients: Map<WebSocket, Client> = new Map();
 const rooms: Map<string, Set<WebSocket>> = new Map();
 
-wss.on('connection', (ws: WebSocket) => {
-    console.log('New client connected');
+ws.on('connection', (ws: WebSocket) =>{
+    console.log('new Client connected');
 
-    ws.on('message', (message: string) => {
+    ws.on('message', (message: string) =>{
         const data = JSON.parse(message.toString());
         handleMessage(ws, data);
-    });
+    })
 
     ws.on('close', () => {
-        // handleLeaveRoom(ws);
+        console.log('Client disconnected');
         clients.delete(ws);
     });
 });
 
-function handleMessage(ws: WebSocket, data: any): void {
+function handleMessage(ws: WebSocket, data: any): void{
     switch (data.type) {
         case 'join':
-            // handleJoinRoom(ws, data);
+            console.log('joining');
             break;
-        case 'message':
-            // handleChatMessage(ws, data);
+        case 'chat':
+            console.log('Chatting');
             break;
         case 'leave':
-            // handleLeaveRoom(ws);
+            console.log('Leaving');
+            break;
+        default:
+            console.log('Unknown message');
             break;
     }
 }
 
-// function handleJoinRoom(ws,data){}
-// function handleChatMessage(){}
-// function handleLeaveRoom(){}
-const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    console.log(`server listening on port ${PORT}`);
+})
