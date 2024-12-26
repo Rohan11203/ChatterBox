@@ -8,12 +8,13 @@ const server = createServer(app);
 const ws = new WebSocketServer({ server })
 const PORT = 3001;
 
+
 app.use(express.json());
 app.use(cors());
 
 interface Client {
     ws: WebSocket;
-    usernames: string;
+    username: string;
     roomId: string;
 }
 
@@ -43,18 +44,57 @@ ws.on('connection', (ws: WebSocket) =>{
 function handleMessage(ws: WebSocket, data: any): void{
     switch (data.type) {
         case 'join':
+            handleJoin(ws, data);
             console.log('joining');
             break;
         case 'chat':
             console.log('Chatting');
             break;
         case 'leave':
+            handleaveRoom(ws)
             console.log('Leaving');
             break;
         default:
             console.log('Unknown message');
             break;
     }
+}
+
+function handleJoin(ws: WebSocket, data: {username: string , roomId: string}): void{
+    const { username, roomId } = data;
+    
+    if(clients.has(ws)){
+        handleaveRoom(ws)
+        console.log("Leaving previous room")
+    }
+
+    if(!rooms.has(roomId)){
+        rooms.set(roomId, new Set());
+    }
+    const room = rooms.get(roomId)
+    room?.add(ws)
+    clients.set(ws, { ws, username, roomId });
+    console.log(`UserJoined ${username} room ${roomId}`)
+}
+
+function handleaveRoom(ws: WebSocket): void{
+    const client = clients.get(ws);
+
+    if(!client) return;
+
+    const { username, roomId } = client;
+    const room = rooms.get(roomId);
+    console.log(room)
+    if(room){
+        room.delete(ws);
+        console.log("deleted")
+        if(room.size === 0){
+            rooms.delete(roomId);
+        } else{
+            console.log(`User left ${username} room ${roomId}`)
+        }
+    }
+    
 }
 
 server.listen(PORT, () => {
