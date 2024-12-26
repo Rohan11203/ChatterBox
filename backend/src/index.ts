@@ -19,7 +19,7 @@ interface Client {
 }
 
 interface ChatMessage {
-    type: 'message';
+    type: 'message' | 'system';
     username?: string;
     content?: string;
     users?: string[];
@@ -91,10 +91,35 @@ function handleaveRoom(ws: WebSocket): void{
         if(room.size === 0){
             rooms.delete(roomId);
         } else{
-            console.log(`User left ${username} room ${roomId}`)
+           broadCastToRoom(roomId, {
+            type: "system",
+            content: `${username} Left the room`
+           })
         }
     }
     
+}
+
+
+function handleChatMessage(ws: WebSocket, data: { content: string, }): void{
+    const client = clients.get(ws);
+    if(!client) return;
+    broadCastToRoom(client.roomId, {
+       type: 'message',
+       username: client.roomId,
+       content: data.content, 
+    });
+}
+
+function broadCastToRoom(roomId: string, message: ChatMessage):void{
+    const room = rooms.get(roomId);
+    if(!room) return;
+    const messageStr = JSON.stringify(message);
+    room.forEach((client) => {
+        if(client.readyState === WebSocket.OPEN){
+            client.send(messageStr);
+        }
+    });
 }
 
 server.listen(PORT, () => {
