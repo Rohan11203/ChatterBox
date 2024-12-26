@@ -1,16 +1,7 @@
 import express from 'express';
-import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
 import cors from 'cors';
-
-const app = express();
-const server = createServer(app);
-const ws = new WebSocketServer({ server })
-const PORT = 3001;
-
-
-app.use(express.json());
-app.use(cors());
 
 interface Client {
     ws: WebSocket;
@@ -19,109 +10,141 @@ interface Client {
 }
 
 interface ChatMessage {
-    type: 'message' | 'system';
+    type: 'message' | 'system' | 'userList';
     username?: string;
     content?: string;
+    timestamp?: string;
     users?: string[];
 }
+
+const app = express();
+app.use(cors());
+
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
+
+// Store connected clients and rooms
 const clients: Map<WebSocket, Client> = new Map();
 const rooms: Map<string, Set<WebSocket>> = new Map();
 
-ws.on('connection', (ws: WebSocket) =>{
-    console.log('new Client connected');
+wss.on('connection', (ws: WebSocket) => {
+    console.log('New client connected');
 
-    ws.on('message', (message: string) =>{
+    ws.on('message', (message: string) => {
         const data = JSON.parse(message.toString());
         handleMessage(ws, data);
-    })
+    });
 
     ws.on('close', () => {
-        console.log('Client disconnected');
+        handleLeaveRoom(ws);
         clients.delete(ws);
     });
 });
 
-function handleMessage(ws: WebSocket, data: any): void{
+function handleMessage(ws: WebSocket, data: any): void {
     switch (data.type) {
         case 'join':
-            handleJoin(ws, data);
-            console.log('joining');
+            handleJoinRoom(ws, data);
             break;
-        case 'chat':
-            console.log('Chatting');
+        case 'message':
+            handleChatMessage(ws, data);
             break;
         case 'leave':
-            handleaveRoom(ws)
-            console.log('Leaving');
-            break;
-        default:
-            console.log('Unknown message');
+            handleLeaveRoom(ws);
             break;
     }
 }
 
-function handleJoin(ws: WebSocket, data: {username: string , roomId: string}): void{
+function handleJoinRoom(ws: WebSocket, data: { username: string; roomId: string }): void {
     const { username, roomId } = data;
-    
-    if(clients.has(ws)){
-        handleaveRoom(ws)
-        console.log("Leaving previous room")
+
+    // Remove from previous room
+    if (clients.has(ws)) {
+        handleLeaveRoom(ws);
     }
 
-    if(!rooms.has(roomId)){
+    if (!rooms.has(roomId)) {
         rooms.set(roomId, new Set());
     }
-    const room = rooms.get(roomId)
-    room?.add(ws)
+
+    const room = rooms.get(roomId)!;
+    room.add(ws);
     clients.set(ws, { ws, username, roomId });
-    console.log(`UserJoined ${username} room ${roomId}`)
+
+    broadcastToRoom(roomId, {
+        type: 'system',
+        content: `${username} joined the room`,
+        timestamp: new Date().toISOString()
+    });
+
+    // Send room user list
+    updateRoomUserList(roomId);
 }
 
-function handleaveRoom(ws: WebSocket): void{
+function handleLeaveRoom(ws: WebSocket): void {
     const client = clients.get(ws);
-
-    if(!client) return;
+    if (!client) return;
 
     const { username, roomId } = client;
     const room = rooms.get(roomId);
-    console.log(room)
-    if(room){
+
+    if (room) {
         room.delete(ws);
-        console.log("deleted")
-        if(room.size === 0){
+
+        // Delete room if empty
+        if (room.size === 0) {
             rooms.delete(roomId);
-        } else{
-           broadCastToRoom(roomId, {
-            type: "system",
-            content: `${username} Left the room`
-           })
+        } else {
+            
+            broadcastToRoom(roomId, {
+                type: 'system',
+                content: `${username} left the room`,
+                timestamp: new Date().toISOString()
+            });
+            updateRoomUserList(roomId);
         }
     }
-    
 }
 
-
-function handleChatMessage(ws: WebSocket, data: { content: string, }): void{
+function handleChatMessage(ws: WebSocket, data: { content: string }): void {
     const client = clients.get(ws);
-    if(!client) return;
-    broadCastToRoom(client.roomId, {
-       type: 'message',
-       username: client.roomId,
-       content: data.content, 
+    if (!client) return;
+
+    broadcastToRoom(client.roomId, {
+        type: 'message',
+        username: client.username,
+        content: data.content,
+        timestamp: new Date().toISOString()
     });
 }
 
-function broadCastToRoom(roomId: string, message: ChatMessage):void{
+function broadcastToRoom(roomId: string, message: ChatMessage): void {
     const room = rooms.get(roomId);
-    if(!room) return;
+    if (!room) return;
+
     const messageStr = JSON.stringify(message);
     room.forEach((client) => {
-        if(client.readyState === WebSocket.OPEN){
+        if (client.readyState === WebSocket.OPEN) {
             client.send(messageStr);
         }
     });
 }
 
+function updateRoomUserList(roomId: string): void {
+    const room = rooms.get(roomId);
+    if (!room) return;
+
+    const userList = Array.from(room)
+        .map(ws => clients.get(ws)?.username)
+        .filter(username => username !== undefined);
+
+    broadcastToRoom(roomId, {
+        type: 'userList',
+        users: userList
+    });
+}
+
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-    console.log(`server listening on port ${PORT}`);
-})
+    console.log(`Server is running on port ${PORT}`);
+});
