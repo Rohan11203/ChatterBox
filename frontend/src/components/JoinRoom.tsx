@@ -9,7 +9,7 @@ interface MessageData {
 }
 const JoinRoom = () => {
   const navigate = useNavigate();
-  const {wsRef, username, roomId,users, setUsers } = useStore();
+  const {wsRef, username, roomId, setUsers } = useStore();
 
   function handleMessage(data: MessageData) {
     if (Array.isArray(data.users)) {
@@ -31,14 +31,14 @@ const JoinRoom = () => {
           roomId: roomId.current?.value,
         })
       );
-      wsRef.current.onmessage = (e) => {
+      wsRef.current!.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if(data.type === 'userList'){
           handleMessage(data)
         }
       }
 
-      wsRef.current.onerror = () => {
+      wsRef.current!.onerror = () => {
         console.log("Ws Error")
       }
 

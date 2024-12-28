@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useStore } from "../store/ContexProvider";
 
 interface Chat {
+  username: string;
   content: string;
   timestamp: string
 }
@@ -15,23 +16,22 @@ const ChatSection = () => {
   }
 
   function handleChat(data: Chat){
-    
-    
       let content = data.content;
       setChats((prev) => [...prev, content])
       console.log("chats", chats);
-      inputRef.current.value = ""
+      inputRef.current!.value = ""
   }
 
   const onsendMessage = () => {
     if(!wsRef.current?.readyState){
       console.log("Bro there is error")
     }
+    const message = inputRef.current!.value
       wsRef.current?.send(JSON.stringify({
         "type": "message",
-        "content": inputRef.current?.value
+        "content": message
       }));
-      wsRef.current.onmessage = (e) => {
+      wsRef.current!.onmessage = (e) => {
         const data = JSON.parse(e.data);
         handleChat(data)
         
