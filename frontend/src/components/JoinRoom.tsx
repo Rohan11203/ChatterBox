@@ -1,26 +1,47 @@
-import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useStore } from "../store/ContexProvider";
 
+interface MessageData {
+  content: string;
+  timestamp: string;
+  users: [];
+
+}
 const JoinRoom = () => {
-  const wsRef = useRef<WebSocket | null>(null);
-  const username = useRef(null);
-  const roomId = useRef(null);
   const navigate = useNavigate();
+  const {wsRef, username, roomId,users, setUsers } = useStore();
+
+  function handleMessage(data: MessageData) {
+    if (Array.isArray(data.users)) {
+      setUsers(data.users);
+      console.log("Updated users array:", data.users);
+    } else {
+      console.warn("Received data does not contain a valid users array:", data);
+    }
+  }
 
   const connectToRoom = () => {
     wsRef.current = new WebSocket("ws://localhost:3001");
     wsRef.current.onopen = () => {
       console.log("Connected to server");
-      console.log(username.current.value)
-      console.log(roomId.current.value)
       wsRef.current?.send(
         JSON.stringify({
           type: "join",
-          username: username.current.value,
-          roomId: roomId.current.value,
+          username: username.current?.value,
+          roomId: roomId.current?.value,
         })
       );
-      console.log("after sending to ws backend")
+      wsRef.current.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if(data.type === 'userList'){
+          handleMessage(data)
+        }
+      }
+
+      wsRef.current.onerror = () => {
+        console.log("Ws Error")
+      }
+
       navigate("/chat")
     };
     

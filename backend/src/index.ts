@@ -57,7 +57,7 @@ function handleMessage(ws: WebSocket, data: any): void {
 
 function handleJoinRoom(ws: WebSocket, data: { username: string; roomId: string }): void {
     const { username, roomId } = data;
-
+    console.log("From Frontend",data)
     // Remove from previous room
     if (clients.has(ws)) {
         handleLeaveRoom(ws);
@@ -79,6 +79,7 @@ function handleJoinRoom(ws: WebSocket, data: { username: string; roomId: string 
 
     // Send room user list
     updateRoomUserList(roomId);
+    console.log("all done bro")
 }
 
 function handleLeaveRoom(ws: WebSocket): void {
@@ -109,6 +110,7 @@ function handleLeaveRoom(ws: WebSocket): void {
 function handleChatMessage(ws: WebSocket, data: { content: string }): void {
     const client = clients.get(ws);
     if (!client) return;
+    console.log("client called",data)
 
     broadcastToRoom(client.roomId, {
         type: 'message',
