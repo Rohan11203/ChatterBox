@@ -1,10 +1,26 @@
+import { useRef, useState } from "react";
 import { useStore } from "../store/ContexProvider";
 
+interface Chat {
+  content: string;
+  timestamp: string
+}
 const ChatSection = () => {
   const { users,wsRef } = useStore();
+  const [chats,setChats] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   if (!users || users.length === 0) {
     return <div>No users in the room.</div>;
+  }
+
+  function handleChat(data: Chat){
+    
+    
+      let content = data.content;
+      setChats((prev) => [...prev, content])
+      console.log("chats", chats);
+      inputRef.current.value = ""
   }
 
   const onsendMessage = () => {
@@ -13,10 +29,13 @@ const ChatSection = () => {
     }
       wsRef.current?.send(JSON.stringify({
         "type": "message",
-        "content": "labda"
+        "content": inputRef.current?.value
       }));
       wsRef.current.onmessage = (e) => {
-        console.log(e.data)
+        const data = JSON.parse(e.data);
+        handleChat(data)
+        
+        console.log(data)
       }
     
   }
@@ -27,16 +46,21 @@ const ChatSection = () => {
      <ul>
       {
         users.map((user,index) => (
-          <li key={index}>{user}</li>
+          <p key={index}>{user}</p>
         ))}
      </ul>
      </div>
      <div className="bg-blue-300 h-[300px]">
-      chat will come here
+      
+      {
+        chats.map((chat,index) => (
+          <p key={index}>{chat}</p>
+        ))
+      }
      </div>
 
      <div>
-      <input className="bg-violet-400 border-2 p-2 text-black rounded-xl " type="text"></input>
+      <input ref={inputRef} className="bg-violet-400 border-2 p-2 text-black rounded-xl " type="text"></input>
       <button className="bg-blue-500 p-2 rounded-xl" onClick={onsendMessage}>Send</button>
      </div>
     </div>
