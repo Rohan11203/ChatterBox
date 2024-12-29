@@ -9,7 +9,7 @@ interface MessageData {
 }
 const JoinRoom = () => {
   const navigate = useNavigate();
-  const {wsRef, username, roomId, setUsers } = useStore();
+  const {wsRef, username,setUsername, roomId, setUsers } = useStore();
 
   function handleMessage(data: MessageData) {
     if (Array.isArray(data.users)) {
@@ -27,7 +27,7 @@ const JoinRoom = () => {
       wsRef.current?.send(
         JSON.stringify({
           type: "join",
-          username: username.current?.value,
+          username: username,
           roomId: roomId.current?.value,
         })
       );
@@ -52,7 +52,7 @@ const JoinRoom = () => {
       <div className="h-34 border-1 border-blue-800 rounded grid">
         <input
           className="p-5 border-b-2"
-          ref={username}
+          onChange={(e)=> {setUsername(e.target.value)}}
           type="text"
           placeholder="Username"
         ></input>

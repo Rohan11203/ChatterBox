@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store/ContexProvider";
 
 interface Chat {
@@ -6,27 +6,37 @@ interface Chat {
   content: string;
   timestamp: string
 }
+
+interface ChatState{
+  messages: Chat[];
+  connected: boolean;
+}
 const ChatSection = () => {
-  const { users,wsRef } = useStore();
-  const [chats,setChats] = useState<string[]>([]);
+  const { users,wsRef,username } = useStore();
+  const [chats,setChats] = useState<ChatState>({
+    messages: [],
+    connected: false
+  });
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   if (!users || users.length === 0) {
     return <div>No users in the room.</div>;
   }
 
-  function handleChat(data: Chat){
-      let content = data.content;
-      setChats((prev) => [...prev, content])
-      console.log("chats", chats);
-      inputRef.current!.value = ""
+function handleChat(data: Chat){
+      setChats((prev) => ({
+        ...prev,
+        messages: [...prev.messages, data]
+      }))
+      console.log("This is chat state", chats);
+      inputRef.current.value = '';
   }
 
   const onsendMessage = () => {
     if(!wsRef.current?.readyState){
       console.log("Bro there is error")
     }
-    const message = inputRef.current!.value
+    const message = inputRef.current?.value
       wsRef.current?.send(JSON.stringify({
         "type": "message",
         "content": message
@@ -37,7 +47,9 @@ const ChatSection = () => {
         
         console.log(data)
       }
-    
+      wsRef.current!.onclose = () => {
+        setChats(prev => ({ ...prev, connected: false}))
+      }
   }
   return ( 
     <div  className="bg-slate-500 h-screen grid items-center justify-center" >
@@ -53,8 +65,13 @@ const ChatSection = () => {
      <div className="bg-blue-300 h-[300px]">
       
       {
-        chats.map((chat,index) => (
-          <p key={index}>{chat}</p>
+        chats.messages.map((msg,idx) =>(
+          <div key={idx}>
+           <p className="font-semibold">
+                  {msg.username === username ? 'You' : msg.username}
+                </p>
+                <p>{msg.content}</p>
+          </div>
         ))
       }
      </div>

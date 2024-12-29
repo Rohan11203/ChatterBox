@@ -2,7 +2,8 @@ import React, { createContext, ReactNode, useContext, useRef, useState } from "r
 
 interface StoreContextProps {
   wsRef: React.MutableRefObject<WebSocket | null>;
-  username: React.MutableRefObject<HTMLInputElement | null>;
+  username: string;
+  setUsername: React.Dispatch<React.SetStateAction<string>>;
   roomId: React.MutableRefObject<HTMLInputElement | null>;
   users: string[],
   setUsers: React.Dispatch<React.SetStateAction<string[]>>
@@ -11,7 +12,7 @@ const StoreContext = createContext<StoreContextProps | undefined>(undefined);
 
 export const StoreProvider = ({ children }: {children: ReactNode}) => {
   const wsRef = useRef<WebSocket | null>(null);
-  const username = useRef<HTMLInputElement | null>(null);
+  const [username,setUsername] = useState<string>('');
   const roomId = useRef<HTMLInputElement | null>(null);
   const [users, setUsers] = useState<string[]>([]);
 
@@ -22,6 +23,7 @@ export const StoreProvider = ({ children }: {children: ReactNode}) => {
       value={{
         wsRef,
         username,
+        setUsername,
         roomId,
         users,
         setUsers
