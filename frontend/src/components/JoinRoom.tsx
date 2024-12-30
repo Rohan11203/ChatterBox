@@ -48,23 +48,35 @@ const JoinRoom = () => {
   };
 
   return (
-    <div className="flex bg-red-300 h-screen items-center justify-center">
-      <div className="h-34 border-1 border-blue-800 rounded grid">
-        <input
-          className="p-5 border-b-2"
-          onChange={(e)=> {setUsername(e.target.value)}}
-          type="text"
-          placeholder="Username"
-        ></input>
-        <input
-          className="p-5"
-          ref={roomId}
-          type="text"
-          placeholder="RoomId"
-        ></input>
-        <button className="p-2 bg-blue-600"  onClick = {connectToRoom} type="submit">
-          Join Room
-        </button>
+     <div className="flex bg-black h-screen items-center justify-center">
+      
+      <div className="h-[400px] p-6 text-white w-[350px]">
+        {/* Logo Section */}
+        <div className="text-center mb-6">
+        <h1 className="text-4xl font-bold">Join a space</h1>
+        </div>
+
+        {/* Join Room Form */}
+        <div className="flex flex-col space-y-4">
+          <input
+            type="text"
+            placeholder="Enter your username"
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-2 bg-black text-white rounded-md border-2 border-gray-600 focus:outline-none"
+          />
+          <input
+            type="text"
+            ref={roomId}
+            placeholder="Enter Room ID"
+            className="p-2 bg-black text-white rounded-md border-2 border-gray-600 focus:outline-none"
+          />
+          <button
+            onClick={connectToRoom}
+            className="bg-[rgba(167,100,250,1)] text-black p-2 rounded-md hover:bg-[rgba(167,140,250,1)]"
+          >
+            Join Room
+          </button>
+        </div>
       </div>
     </div>
   );
