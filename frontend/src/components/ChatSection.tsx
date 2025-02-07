@@ -1,26 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store/ContexProvider";
 import { useNavigate } from "react-router-dom";
+import { Send, LogOut, Users, MessageSquare, User } from "lucide-react";
 
 interface Chat {
   username: string;
   content: string;
-  timestamp: string
+  timestamp: string;
 }
 
-interface ChatState{
+interface ChatState {
   messages: Chat[];
   connected: boolean;
 }
+
 const ChatSection = () => {
-  const { users,wsRef,username } = useStore();
-  const [chatState,setchatState] = useState<ChatState>({
+  const { users, wsRef, username } = useStore();
+  const [chatState, setchatState] = useState<ChatState>({
     messages: [],
     connected: false
   });
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const navigate = useNavigate()
-  // Handle new incoming chat messages
+  const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const handleChat = (data: Chat) => {
     setchatState((prev) => ({
       ...prev,
@@ -28,133 +31,175 @@ const ChatSection = () => {
     }));
 
     if (inputRef.current) {
-      inputRef.current.value = ""; 
+      inputRef.current.value = "";
     }
   };
 
   const onsendMessage = () => {
     const message = inputRef.current?.value.trim();
+    if (!message) return;
 
-    if(wsRef.current?.readyState !== WebSocket.OPEN){
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
       console.log("Websocket is not connected");
       return;
     }
-    
-      wsRef.current?.send(JSON.stringify({
-        "type": "message",
-        "content": message
-      }));
-  
+
+    wsRef.current?.send(JSON.stringify({
+      "type": "message",
+      "content": message
+    }));
+  };
+
+  const onLeaveRoom = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.close();
     }
+    setchatState({
+      messages: [],
+      connected: false
+    });
+    navigate("/");
+  };
 
-    const onLeaveRoom = () => {
-      if(wsRef.current?.readyState === WebSocket.OPEN){
-        wsRef.current.close();
-      }
-      setchatState({
-        messages: [],
-        connected: false
-      })
-      navigate("/")
-    }
-    useEffect(() => {
-      if(!wsRef.current) return;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-      const onMessage = (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
-        handleChat(data);
-      }
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatState.messages]);
 
-      const onClose = () => {
-        setchatState((prev) => ({...prev, connected: false}))
-      }
+  useEffect(() => {
+    if (!wsRef.current) return;
 
-      wsRef.current.addEventListener("message", onMessage);
-      wsRef.current.addEventListener("close", onClose);
+    const onMessage = (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      handleChat(data);
+    };
 
-      return () => {
-        wsRef.current?.removeEventListener("message", onMessage);
-        wsRef.current?.removeEventListener("close", onClose);
-      }
-    },[wsRef])
+    const onClose = () => {
+      setchatState((prev) => ({ ...prev, connected: false }));
+    };
 
-    if(!users || users.length === 0){
-      return <div>No users in the room.</div>;
-    }
+    wsRef.current.addEventListener("message", onMessage);
+    wsRef.current.addEventListener("close", onClose);
 
-  return ( 
-    <div className="bg-black h-screen flex flex-col items-center justify-center text-white p-5 space-y-6">
-  {/* Logo */}
-  <div className="text-4xl font-bold text-purple-400 mb-4">
-    Chat Space
-  </div>
+    return () => {
+      wsRef.current?.removeEventListener("message", onMessage);
+      wsRef.current?.removeEventListener("close", onClose);
+    };
+  }, [wsRef]);
 
-  {/* Users Section */}
-  <div className="bg-purple-600 rounded-lg p-4 shadow-md w-full max-w-sm">
-    <h2 className="text-lg font-semibold mb-3">Users in Room</h2>
-    <ul className="space-y-2">
-      {users.map((user, index) => (
-        <li key={index} className="bg-purple-800 p-2 rounded-md text-center">
-          {user}
-        </li>
-      ))}
-    </ul>
-  </div>
+  if (!users || users.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-gray-300">
+        <Users className="mr-2" /> No users in the room.
+      </div>
+    );
+  }
 
-  {/* Chat Messages Section */}
-  <div className="bg-gray-800 rounded-lg p-4 shadow-md w-full max-w-lg h-[300px] overflow-y-auto">
-    {chatState.messages.length > 0 ? (
-      chatState.messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className={`mb-4 flex ${
-            msg.username === username ? "justify-end" : "justify-start"
-          }`}
+  return (
+    <div className="h-screen bg-gray-900 flex flex-col">
+      {/* Header */}
+      <div className="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-indigo-400 font-bold text-xl">
+          <MessageSquare className="w-6 h-6" />
+          Chat Space
+        </div>
+        <button
+          onClick={onLeaveRoom}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
-          <div
-            className={`max-w-xs p-3 rounded-lg ${
-              msg.username === username
-                ? "bg-green-600 text-white text-right"
-                : "bg-blue-600 text-white text-left"
-            }`}
-          >
-            <p className="font-semibold">
-              {msg.username === username ? "You" : msg.username}
-            </p>
-            <p>{msg.content}</p>
+          <LogOut className="w-4 h-4" />
+          Leave Room
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Users Sidebar */}
+        <div className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2 text-gray-200 font-semibold">
+              <Users className="w-5 h-5" />
+              Online Users ({users.length})
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {users.map((user, index) => (
+              <div
+                key={index}
+                className={`flex items-center gap-2 p-3 rounded-lg mb-2 transition-colors ${
+                  user === username 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                <span className="truncate">{user === username ? `${user} (You)` : user}</span>
+              </div>
+            ))}
           </div>
         </div>
-      ))
-    ) : (
-      <p className="text-gray-500">No messages yet. Start the conversation!</p>
-    )}
-  </div>
 
-  {/* Input & Actions Section */}
-  <div className="flex items-center space-x-4 w-full max-w-lg">
-    <input
-      ref={inputRef}
-      className="bg-purple-700 border-2 border-purple-400 p-3 text-white rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
-      type="text"
-      placeholder="Type your message..."
-    />
-    <button
-      className="bg-blue-500 p-3 rounded-lg text-white font-semibold hover:bg-blue-600"
-      onClick={onsendMessage}
-    >
-      Send
-    </button>
-    <button
-      className="bg-red-500 p-3 rounded-lg text-white font-semibold hover:bg-red-600"
-      onClick={onLeaveRoom}
-    >
-      Leave
-    </button>
-  </div>
-</div>
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {chatState.messages.length > 0 ? (
+              chatState.messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    msg.username === username ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-xl rounded-lg px-4 py-2 ${
+                      msg.username === username
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-700 text-gray-200"
+                    }`}
+                  >
+                    <div className="font-semibold text-sm mb-1">
+                      {msg.username === username ? "You" : msg.username}
+                    </div>
+                    <div className="break-words">{msg.content}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
+                <MessageSquare className="w-12 h-12" />
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-  
-  )
-}
+          {/* Input Area */}
+          <div className="p-4 bg-gray-800 border-t border-gray-700">
+            <div className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                className="flex-1 bg-gray-700 text-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                type="text"
+                placeholder="Type your message..."
+                onKeyPress={(e) => e.key === 'Enter' && onsendMessage()}
+              />
+              <button
+                onClick={onsendMessage}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Send className="w-4 h-4" />
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default ChatSection;

@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import './App.css'
 import ChatApp from './ChatApp'
 import JoinRoom from './components/JoinRoom'
