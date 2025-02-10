@@ -24,6 +24,10 @@ const JoinRoom = () => {
     wsRef.current = new WebSocket("ws://localhost:3001");
     wsRef.current.onopen = () => {
       console.log("Connected to server");
+      if(!username) {
+        alert("Please enter a username")
+        return;
+      }
       wsRef.current?.send(
         JSON.stringify({
           type: "join",
@@ -51,12 +55,10 @@ const JoinRoom = () => {
      <div className="flex bg-black h-screen items-center justify-center">
       
       <div className="h-[400px] p-6 text-white w-[350px]">
-        {/* Logo Section */}
         <div className="text-center mb-6">
         <h1 className="text-4xl font-bold">Join a space</h1>
         </div>
 
-        {/* Join Room Form */}
         <div className="flex flex-col space-y-4">
           <input
             type="text"

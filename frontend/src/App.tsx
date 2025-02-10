@@ -17,7 +17,6 @@ function App() {
     <Routes>
       <Route path="/" element={<ChatApp />} />
       <Route path="/join" element={<JoinRoom />} />
-      <Route path="/create" element={<CreateRoom />} />
       <Route path="/chat" element={<ChatSection />} />
     </Routes>
     </StoreProvider>
