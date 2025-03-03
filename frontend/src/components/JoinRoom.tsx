@@ -52,14 +52,14 @@ const JoinRoom = () => {
   };
 
   return (
-     <div className="flex bg-black h-screen items-center justify-center">
+     <div className="flex bg-black h-screen  items-center justify-center">
       
-      <div className="h-[400px] p-6 text-white w-[350px]">
-        <div className="text-center mb-6">
+      <div className="h-[350px] p-6 text-white w-[350px] border rounded-lg">
+        <div className="text-center mb-12">
         <h1 className="text-4xl font-bold">Join a space</h1>
         </div>
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-6">
           <input
             type="text"
             placeholder="Enter your username"

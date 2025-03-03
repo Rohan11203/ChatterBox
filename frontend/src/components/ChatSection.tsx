@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store/ContexProvider";
 import { useNavigate } from "react-router-dom";
-import { Send, LogOut, Users, MessageSquare, User } from "lucide-react";
+import {
+  Send,
+  LogOut,
+  Users,
+  MessageSquare,
+  User,
+  SmilePlus,
+  Copy,
+} from "lucide-react";
 
 interface Chat {
   username: string;
@@ -18,7 +26,7 @@ const ChatSection = () => {
   const { users, wsRef, username } = useStore();
   const [chatState, setchatState] = useState<ChatState>({
     messages: [],
-    connected: false
+    connected: false,
   });
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
@@ -44,10 +52,14 @@ const ChatSection = () => {
       return;
     }
 
-    wsRef.current?.send(JSON.stringify({
-      "type": "message",
-      "content": message
-    }));
+    wsRef.current?.send(
+      JSON.stringify({
+        type: "message",
+        content: message,
+      })
+    );
+
+    console.log(chatState);
   };
 
   const onLeaveRoom = () => {
@@ -56,7 +68,7 @@ const ChatSection = () => {
     }
     setchatState({
       messages: [],
-      connected: false
+      connected: false,
     });
     navigate("/");
   };
@@ -99,100 +111,96 @@ const ChatSection = () => {
   }
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-indigo-400 font-bold text-xl">
-          <MessageSquare className="w-6 h-6" />
-          Chat Space
-        </div>
-        <button
-          onClick={onLeaveRoom}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Leave Room
-        </button>
-      </div>
+    <div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-lg bg-[#111111] rounded-2xl overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-800">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-200">Room ID: 56011716</span>
+              <button className="text-gray-400 hover:text-gray-200">
+                <Copy size={16} />
+              </button>
+            </div>
+            <button
+              onClick={onLeaveRoom}
+              className="px-4 py-1 bg-[#9333EA] hover:bg-[#A855F7] text-white rounded-md text-sm"
+            >
+              Exit
+            </button>
+          </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Users Sidebar */}
-        <div className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex items-center gap-2 text-gray-200 font-semibold">
-              <Users className="w-5 h-5" />
-              Online Users ({users.length})
+          {/* Chat Area */}
+          <div className="flex-1 p-4 min-h-[500px] overflow-y-auto">
+            <div className="flex justify-end items-start gap-2">
+                <div className="flex-1 p-4 min-h-[500px] overflow-y-auto">
+                  {chatState.messages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-start gap-2 mb-4 ${
+                        msg.username === username
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      {msg.username && msg.username !== username && (
+                        <div className="w-8 h-8 rounded-full bg-[#9333EA] flex items-center justify-center text-white text-sm">
+                          {msg.username}
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-1">
+                        {msg.username !== username && (
+                          <span className="text-xs text-gray-400 ml-1">
+                            {msg.username}
+                          </span>
+                        )}
+                        <div
+                          className={`flex items-center gap-2 px-4 py-2 rounded-2xl max-w-sm break-words
+                  ${
+                    msg.username === username
+                      ? "bg-[#9333EA] text-white"
+                      : "bg-[#1A1A1A] text-gray-200"
+                  }`}
+                        >
+                          <span>{msg.content}</span>
+                        </div>
+                      </div>
+                      {msg.username === username && (
+                        <div className="w-8 h-8 rounded-full bg-[#9333EA] flex items-center justify-center text-white text-sm">
+                          {msg.username}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+
+              <img
+                src="/placeholder.svg?height=32&width=32"
+                alt="User avatar"
+                className="w-8 h-8 rounded-full"
+              />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            {users.map((user, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-2 p-3 rounded-lg mb-2 transition-colors ${
-                  user === username 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                }`}
-              >
-                <User className="w-4 h-4" />
-                <span className="truncate">{user === username ? `${user} (You)` : user}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatState.messages.length > 0 ? (
-              chatState.messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    msg.username === username ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-xl rounded-lg px-4 py-2 ${
-                      msg.username === username
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-700 text-gray-200"
-                    }`}
-                  >
-                    <div className="font-semibold text-sm mb-1">
-                      {msg.username === username ? "You" : msg.username}
-                    </div>
-                    <div className="break-words">{msg.content}</div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
-                <MessageSquare className="w-12 h-12" />
-                <p>No messages yet. Start the conversation!</p>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-gray-800 border-t border-gray-700">
-            <div className="flex items-center gap-2">
+          {/* Message Input */}
+          <div className="p-4 border-t border-gray-800">
+            <div className="flex items-center gap-2 bg-[#1A1A1A] rounded-xl px-4 py-2">
+              <button className="text-[#9333EA] hover:text-[#A855F7]">
+                <SmilePlus size={20} />
+              </button>
               <input
                 ref={inputRef}
-                className="flex-1 bg-gray-700 text-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 type="text"
-                placeholder="Type your message..."
-                onKeyPress={(e) => e.key === 'Enter' && onsendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && onsendMessage}
+                placeholder="Enter a message"
+                className="flex-1 bg-transparent text-gray-200 outline-none placeholder:text-gray-500"
               />
               <button
                 onClick={onsendMessage}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="text-[#9333EA] hover:text-[#A855F7]"
               >
-                <Send className="w-4 h-4" />
-                Send
+                <Send size={20} />
               </button>
             </div>
           </div>
