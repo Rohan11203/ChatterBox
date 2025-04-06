@@ -19,7 +19,7 @@ interface ChatState {
 }
 
 const ChatSection = () => {
-  const { users, wsRef, username, roomId } = useStore();
+  const { users, wsRef, username } = useStore();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const [chatState, setChatState] = useState<ChatState>({

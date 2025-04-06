@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MessageSquare, Users, Plus } from 'lucide-react';
+import { MessageSquare, Users } from 'lucide-react';
 
 const ChatApp = () => {
   return (

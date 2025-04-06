@@ -2,7 +2,6 @@ import './App.css'
 import ChatApp from './ChatApp'
 import JoinRoom from './components/JoinRoom'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import CreateRoom from './components/CreateRoom'
 import ChatSection from './components/ChatSection'
 import { StoreProvider } from './store/ContexProvider'
 
