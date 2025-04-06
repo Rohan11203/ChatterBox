@@ -21,7 +21,7 @@ const JoinRoom = () => {
   }
 
   const connectToRoom = () => {
-    wsRef.current = new WebSocket("ws://localhost:3001");
+    wsRef.current = new WebSocket("https://chat-space-20a4.onrender.com");
     wsRef.current.onopen = () => {
       console.log("Connected to server");
       if(!username) {
