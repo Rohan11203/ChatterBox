@@ -27,6 +27,7 @@ const ChatSection = () => {
     connected: false,
     initialized: false,
   });
+  const [joinError, setJoinError] = useState<string>("");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -39,7 +40,7 @@ const ChatSection = () => {
       const end = input.selectionEnd || 0;
       const text = input.value;
       const newText = text.substring(0, start) + emojiData.emoji + text.substring(end);
-      
+
       input.value = newText;
       // Move cursor after inserted emoji
       const newCursorPos = start + emojiData.emoji.length;
@@ -51,8 +52,6 @@ const ChatSection = () => {
 
   // Generate a Robohash URL based on username
   const getRobohashUrl = (username: string) => {
-    // Create a deterministic but unique hash based on the username
-    // This ensures the same user always gets the same avatar
     return `https://robohash.org/${encodeURIComponent(username)}?set=set3`;
   };
 
@@ -120,6 +119,11 @@ const ChatSection = () => {
     const onMessage = (e: MessageEvent) => {
       const data = JSON.parse(e.data);
 
+      if (data.type === "error") {
+        setJoinError(data.content);
+        return;
+      }
+
       // Filter out empty messages that might be caused by re-rendering
       if (data.content !== undefined && data.content !== null) {
         handleChat(data);
@@ -139,6 +143,17 @@ const ChatSection = () => {
     };
   }, [wsRef]);
 
+  // If there's a join error, show it
+  if ((!users || users.length === 0) && joinError) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-red-400">
+        <Users className="mr-2" />
+        {joinError}
+      </div>
+    );
+  }
+
+  // If truly no users and no error
   if (!users || users.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-gray-300">
