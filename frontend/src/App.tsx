@@ -3,7 +3,7 @@ import ChatApp from './ChatApp'
 import JoinRoom from './components/JoinRoom'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ChatSection from './components/ChatSection'
-import { StoreProvider, useStore } from './store/ContexProvider'
+import {  useStore } from './store/ContexProvider'
 import PrivateRoomModal from './components/PrivateRoomModal'
 
 

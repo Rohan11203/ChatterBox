@@ -1,4 +1,3 @@
-// JoinPrivateRoom.tsx
 import React, { useState } from "react";
 import { useStore } from "../store/ContexProvider";
 import { useNavigate } from "react-router-dom";
@@ -71,7 +70,7 @@ const JoinPrivateRoom: React.FC<JoinPrivateRoomProps> = ({ onClose }) => {
             required
           />
 
-          
+
           <label
             htmlFor="privateRoomId"
             className="block text-gray-700 font-medium mb-2"

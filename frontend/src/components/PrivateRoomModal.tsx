@@ -1,4 +1,3 @@
-// PrivateRoomModal.tsx
 import React, { useState } from 'react';
 import CreatePrivateRoom from './CreatePrivateRoom';
 import JoinPrivateRoom from './JoinPrivateRoom';
